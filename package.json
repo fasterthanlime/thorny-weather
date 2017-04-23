@@ -1,0 +1,22 @@
+{
+  "name": "ld38",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "@types/electron": "^1.4.37",
+    "bluebird": "^3.5.0",
+    "electron": "^1.6.5",
+    "electron-compile": "^6.4.0",
+    "excalibur": "^0.10.0",
+    "glob": "^7.1.1",
+    "tslint": "^5.1.0"
+  },
+  "devDependencies": {
+    "electron-compilers": "^5.8.1",
+    "typescript": "^2.2.2"
+  },
+  "scripts": {
+    "start": "electron ."
+  }
+}
