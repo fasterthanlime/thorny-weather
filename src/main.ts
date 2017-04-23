@@ -4,6 +4,12 @@ import {app, BrowserWindow} from "electron";
 import {join, resolve} from "path";
 import constants from "./constants";
 
+if (process.env.CAPSULE_LIBRARY_PATH) {
+  // chromium doesn't play along with DC capture
+  // so we just disable acceleration when captured!
+  app.disableHardwareAcceleration();
+}
+
 app.on("ready", () => {
   enableLiveReload();
 
@@ -21,7 +27,9 @@ app.on("ready", () => {
   win.setMenuBarVisibility(false);
   win.loadURL(url);
   win.show();
-  win.webContents.openDevTools({mode: "detach"});
+  if (process.env.DEVTOOLS !== "0") {
+    win.webContents.openDevTools({mode: "detach"});
+  }
 });
 
 app.on("window-all-closed", () => {

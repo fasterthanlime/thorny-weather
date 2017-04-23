@@ -8,11 +8,151 @@ function resourcePath(inPath: string) {
   return `file://${resolve(__dirname, "..", inPath)}`;
 }
 
-class KeyHandler extends ex.Actor {
+enum Dir {
+  Up,
+  Left,
+  Down,
+  Right,
+}
+
+function dirToDelta(dir: Dir): number[] {
+  switch (dir) {
+    case Dir.Up:
+      return [0, -1];
+    case Dir.Left:
+      return [-1, 0];
+    case Dir.Down:
+      return [0, 1];
+    case Dir.Right:
+      return [1, 0];
+  }
+}
+
+function dirToString(dir: Dir): string {
+  switch (dir) {
+    case Dir.Up:
+      return "up";
+    case Dir.Left:
+      return "left";
+    case Dir.Down:
+      return "down";
+    case Dir.Right:
+      return "right";
+  }
+}
+
+interface IAnims {
+  [key: string]: ex.Animation;
+}
+
+interface IXY {
+  x: number;
+  y: number;
+}
+
+class Player extends ex.Actor {
+  dir: Dir;
+  colRow: ex.Vector;
+  sprite: ex.Sprite;
+  anims: IAnims;
+
+  constructor() {
+    super();
+    this.dir = Dir.Right;
+    this.colRow = new ex.Vector(1, 1);
+    this.updatePos();
+  }
+
+  async load(engine: ex.Engine) {
+    const sokoTex = new ex.Texture(resourcePath("images/sokoban_tilesheet.png"));
+    await sokoTex.load();
+
+    const cellSide = 64;  
+    const sheet = new ex.SpriteSheet(
+      sokoTex,
+      sokoTex.width / cellSide, sokoTex.height / cellSide,
+      cellSide, cellSide,
+    );
+
+    const tileIndex = ({x, y}): number => {
+      return x + y * sheet.columns;
+    };
+
+    this.anims = {};
+    const loadAnim = (name: string, xys: IXY[]) => {
+      this.anims[name] = sheet.getAnimationByIndices(
+        engine,
+        xys.map(tileIndex),
+        125,
+      );
+      this.addDrawing(name, this.anims[name]);
+    };
+
+    loadAnim("walk-down", [
+      { x: 0, y: 5 },
+      { x: 1, y: 5 },
+      { x: 2, y: 5 },
+    ]);
+    loadAnim("walk-up", [
+      { x: 3, y: 5 },
+      { x: 4, y: 5 },
+      { x: 5, y: 5 },
+    ]);
+
+    loadAnim("walk-right", [
+      { x: 0, y: 7 },
+      { x: 1, y: 7 },
+      { x: 2, y: 7 },
+    ]);
+    loadAnim("walk-left", [
+      { x: 3, y: 7 },
+      { x: 4, y: 7 },
+      { x: 5, y: 7 },
+    ]);
+  }
+
   update(engine, delta) {
     if (engine.input.keyboard.wasPressed(ex.Input.Keys.W)) {
-      this.emit("plop");
+      this.walk(Dir.Up);
     }
+    if (engine.input.keyboard.wasPressed(ex.Input.Keys.A)) {
+      this.walk(Dir.Left);
+    }
+    if (engine.input.keyboard.wasPressed(ex.Input.Keys.S)) {
+      this.walk(Dir.Down);
+    }
+    if (engine.input.keyboard.wasPressed(ex.Input.Keys.D)) {
+      this.walk(Dir.Right);
+    }
+  }
+
+  walk(dir: Dir) {
+    const [dx, dy] = dirToDelta(dir);
+    this.dir = dir;
+    // TODO: collision test
+    this.colRow.x += dx;
+    this.colRow.y += dy;
+    this.playAnim(`walk-${dirToString(dir)}`);
+    this.updatePos();
+    this.emit("walked");
+  }
+
+  playAnim(animName: string, play = true) {
+    const log = ex.Logger.getInstance();
+    const anim = this.anims[animName];
+    if (anim) {
+      if (play) {
+        anim.reset();
+      }
+      this.setDrawing(animName);
+    } else {
+      log.warn(`couldn't find ${animName}`);
+    }
+  }
+
+  updatePos() {
+    this.pos.x = (.5 + this.colRow.x) * constants.cellWidth;
+    this.pos.y = (.5 + this.colRow.y) * constants.cellHeight;
   }
 }
 
@@ -32,7 +172,6 @@ async function startGame() {
   });
 
   const log = ex.Logger.getInstance();
-  log.defaultLevel = ex.LogLevel.Debug;
   log.info("Loading sounds...");
 
   const walkSounds = [];
@@ -46,15 +185,6 @@ async function startGame() {
   }
 
   game.backgroundColor = new ex.Color(.83, .82, .71);
-
-  const keyhandler = new KeyHandler();
-  game.add(keyhandler);
-
-  keyhandler.on("plop", () => {
-    const index = Math.floor(Math.random() * (walkSounds.length - 1));
-    log.info("Plopping, index ", index);
-    walkSounds[index].play();
-  });
 
   const sokoTex = new ex.Texture(resourcePath("images/sokoban_tilesheet.png"));
   await sokoTex.load();
@@ -120,6 +250,15 @@ async function startGame() {
     }
   }
   game.add(tilemap);
+
+  const player = new Player();
+  game.add(player);
+
+  player.on("walked", () => {
+    const index = Math.floor(Math.random() * (walkSounds.length - 1));
+    walkSounds[index].play();
+  });
+  await player.load(game);
 
   game.start();
 }
