@@ -12,6 +12,7 @@ const mapping = {
   "3": {x:  4, y: 3},
   "4": {x:  5, y: 3},
   "5": {x:  6, y: 3},
+  "6": {x:  7, y: 3},
 };
 
 export function updateMap(tilemap: ex.TileMap, sheet: ex.SpriteSheet, spec: MapSpec) {
