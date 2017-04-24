@@ -3,6 +3,7 @@ import * as ex from "excalibur";
 import constants from "./constants";
 import {resolve} from "path";
 import glob from "./glob";
+import * as TWEEN from "tween.js";
 
 function resourcePath(inPath: string) {
   return `file://${resolve(__dirname, "..", inPath)}`;
@@ -50,16 +51,38 @@ interface IXY {
   y: number;
 }
 
+class Tweener extends ex.Actor {
+  update(engine, delta) {
+    TWEEN.update();
+  }
+}
+
+enum PlayerState {
+  Idle,
+  Rest,
+  Walk,
+}
+
+function playerStateToAnim(ps: PlayerState): string {
+  switch (ps) {
+    case PlayerState.Idle: return "idle";
+    case PlayerState.Rest: return "idle";
+    case PlayerState.Walk: return "walk";
+  }
+}
+
 class Player extends ex.Actor {
-  dir: Dir;
-  colRow: ex.Vector;
+  state = PlayerState.Idle;
+  dir = Dir.Right;
+  colRow = new ex.Vector(1, 1);
   sprite: ex.Sprite;
   anims: IAnims;
+  tilemap: ex.TileMap;
+  restTime = 0;
 
-  constructor() {
+  constructor(tilemap: ex.TileMap) {
     super();
-    this.dir = Dir.Right;
-    this.colRow = new ex.Vector(1, 1);
+    this.tilemap = tilemap;
     this.updatePos();
   }
 
@@ -80,48 +103,83 @@ class Player extends ex.Actor {
 
     this.anims = {};
     const loadAnim = (name: string, xys: IXY[]) => {
-      this.anims[name] = sheet.getAnimationByIndices(
+      const anim = sheet.getAnimationByIndices(
         engine,
         xys.map(tileIndex),
-        125,
+        200,
       );
+      anim.loop = true;
+      this.anims[name] = anim;
       this.addDrawing(name, this.anims[name]);
     };
 
-    loadAnim("walk-down", [
+    loadAnim("idle-down", [
       { x: 0, y: 5 },
+    ]);
+    loadAnim("walk-down", [
       { x: 1, y: 5 },
+      { x: 0, y: 5 },
       { x: 2, y: 5 },
+      { x: 0, y: 5 },
+    ]);
+    loadAnim("idle-up", [
+      { x: 3, y: 5 },
     ]);
     loadAnim("walk-up", [
-      { x: 3, y: 5 },
       { x: 4, y: 5 },
+      { x: 3, y: 5 },
       { x: 5, y: 5 },
+      { x: 3, y: 5 },
     ]);
 
-    loadAnim("walk-right", [
+    loadAnim("idle-right", [
       { x: 0, y: 7 },
+    ]);
+    loadAnim("walk-right", [
       { x: 1, y: 7 },
+      { x: 0, y: 7 },
       { x: 2, y: 7 },
+      { x: 0, y: 7 },
+    ]);
+    loadAnim("idle-left", [
+      { x: 3, y: 7 },
     ]);
     loadAnim("walk-left", [
-      { x: 3, y: 7 },
       { x: 4, y: 7 },
+      { x: 3, y: 7 },
       { x: 5, y: 7 },
+      { x: 3, y: 7 },
     ]);
+
+    this.updateAnim();
   }
 
   update(engine, delta) {
-    if (engine.input.keyboard.wasPressed(ex.Input.Keys.W)) {
+    switch (this.state) {
+      case PlayerState.Walk:
+        // muffin
+        break;
+      case PlayerState.Rest:
+        // don't handle inputs when resting
+        this.restTime -= delta;
+        if (this.restTime <= 0) {
+          this.state = PlayerState.Idle;
+        }
+        break;
+      case PlayerState.Idle:
+        this.handleInputs(engine);
+        break;
+    }
+  }
+
+  handleInputs(engine: ex.Engine) {
+    if (engine.input.keyboard.isHeld(ex.Input.Keys.W)) {
       this.walk(Dir.Up);
-    }
-    if (engine.input.keyboard.wasPressed(ex.Input.Keys.A)) {
+    } else if (engine.input.keyboard.isHeld(ex.Input.Keys.A)) {
       this.walk(Dir.Left);
-    }
-    if (engine.input.keyboard.wasPressed(ex.Input.Keys.S)) {
+    } else if (engine.input.keyboard.isHeld(ex.Input.Keys.S)) {
       this.walk(Dir.Down);
-    }
-    if (engine.input.keyboard.wasPressed(ex.Input.Keys.D)) {
+    } else if (engine.input.keyboard.isHeld(ex.Input.Keys.D)) {
       this.walk(Dir.Right);
     }
   }
@@ -129,11 +187,52 @@ class Player extends ex.Actor {
   walk(dir: Dir) {
     const [dx, dy] = dirToDelta(dir);
     this.dir = dir;
-    // TODO: collision test
-    this.colRow.x += dx;
-    this.colRow.y += dy;
-    this.playAnim(`walk-${dirToString(dir)}`);
-    this.updatePos();
+
+    const cell = this.tilemap.getCell(
+      Math.round(this.colRow.x + dx),
+      Math.round(this.colRow.y + dy),
+    );
+    if (cell && cell.solid) {
+      const far = {
+        x: this.colRow.x + .1 * dx,
+        y: this.colRow.y + .1 * dy,
+      };
+      const near = {
+        x: Math.round(this.colRow.x),
+        y: Math.round(this.colRow.y),
+      };
+
+      this.state = PlayerState.Walk;
+      const forth = new TWEEN.Tween(this.colRow).to(far, 100).onUpdate(() => {
+        this.updatePos();
+      });
+      
+      const back = new TWEEN.Tween(this.colRow).to(near, 100).onUpdate(() => {
+        this.updatePos();
+      }).onComplete(() => {
+        this.state = PlayerState.Rest;
+        this.restTime = 200;
+        this.updateAnim();
+      });
+      
+      forth.chain(back).start();
+
+      this.updateAnim();
+      this.emit("walked");
+      return;
+    }
+
+    this.state = PlayerState.Walk;
+    this.updateAnim();
+    new TWEEN.Tween(this.colRow).to({
+      x: this.colRow.x + dx, y: this.colRow.y + dy,
+    }, 400).onUpdate(() => {
+      this.updatePos();
+    }).onComplete(() => {
+      this.state = PlayerState.Idle;
+      this.updateAnim();
+    }).start();
+
     this.emit("walked");
   }
 
@@ -141,9 +240,6 @@ class Player extends ex.Actor {
     const log = ex.Logger.getInstance();
     const anim = this.anims[animName];
     if (anim) {
-      if (play) {
-        anim.reset();
-      }
       this.setDrawing(animName);
     } else {
       log.warn(`couldn't find ${animName}`);
@@ -153,6 +249,10 @@ class Player extends ex.Actor {
   updatePos() {
     this.pos.x = (.5 + this.colRow.x) * constants.cellWidth;
     this.pos.y = (.5 + this.colRow.y) * constants.cellHeight;
+  }
+
+  updateAnim() {
+    this.playAnim(`${playerStateToAnim(this.state)}-${dirToString(this.dir)}`);
   }
 }
 
@@ -245,13 +345,16 @@ async function startGame() {
         if (tileSpec) {
           cell.pushSprite(new ex.TileSprite("main", tileIndex(tileSpec)));
         }
+        if (c === "4") {
+          cell.solid = true;
+        }
       }
       row++;
     }
   }
   game.add(tilemap);
 
-  const player = new Player();
+  const player = new Player(tilemap);
   game.add(player);
 
   player.on("walked", () => {
@@ -259,6 +362,8 @@ async function startGame() {
     walkSounds[index].play();
   });
   await player.load(game);
+
+  game.add(new Tweener());
 
   game.start();
 }
