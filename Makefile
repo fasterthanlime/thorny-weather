@@ -2,7 +2,7 @@
 ITCHY=./node_modules/.bin/itchy
 
 all:
-	./node_modules/.bin/electron-compile -a ./src ./sounds ./levels ./images ./fonts
+	./node_modules/.bin/electron-compile -a . ./src ./sounds ./levels ./images ./fonts
 	$(ITCHY) build win32
 	$(ITCHY) build linux
 	$(ITCHY) build osx
