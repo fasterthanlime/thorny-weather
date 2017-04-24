@@ -27,7 +27,7 @@ app.on("ready", () => {
   win.setMenuBarVisibility(false);
   win.loadURL(url);
   win.show();
-  if (process.env.DEVTOOLS !== "0") {
+  if (process.env.DEVTOOLS === "1") {
     win.webContents.openDevTools({mode: "detach"});
   }
 });
