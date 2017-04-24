@@ -5,7 +5,7 @@ const mapCols = 15;
 const mapRows = 10;
 
 export default {
-  startMap: 0,
+  startMap: 2,
 
   cellWidth,
   cellHeight,
@@ -14,5 +14,5 @@ export default {
   mapRows,
 
   windowWidth: mapCols * cellWidth,
-  windowHeight: mapRows * cellHeight,
+  windowHeight: mapRows * cellHeight + 40,
 };

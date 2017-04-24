@@ -87,7 +87,29 @@ async function startGame() {
   tilemap.registerSpriteSheet("main", sheet);
   game.add(tilemap);
 
+  const label = new ex.Label();
+  label.fontFamily = "Arial, sans-serif";
+  label.fontSize = 20;
+  label.fontUnit = ex.FontUnit.Px;
+  label.text = "Yoko boom";
+  label.color = ex.Color.White;
+  label.pos.setTo(10, game.getDrawHeight() - 10);
+  game.add(label);
+
+  const instructLabel = new ex.Label();
+  instructLabel.fontFamily = "Arial, sans-serif";
+  instructLabel.fontSize = 20;
+  instructLabel.fontUnit = ex.FontUnit.Px;
+  instructLabel.text = "Press [R] to restart";
+  instructLabel.color = ex.Color.White;
+  instructLabel.textAlign = ex.TextAlign.Right;
+  instructLabel.pos.setTo(game.getDrawWidth() - 10, game.getDrawHeight() - 10);
+  game.add(instructLabel);
+
   const setupState = () => {
+    const mapName = Object.keys(maps)[mapIndex];
+    label.text = mapName;
+
     state.player.on("won", () => nextMap());
     state.player.on("walked", () => {
       walkSfx.play();
