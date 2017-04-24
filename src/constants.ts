@@ -5,6 +5,8 @@ const mapCols = 15;
 const mapRows = 10;
 
 export default {
+  startMap: 0,
+
   cellWidth,
   cellHeight,
 

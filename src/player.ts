@@ -12,11 +12,20 @@ export class Player extends ex.Actor {
   dir = Dir.Right;
   colRow: IColRow = {col: 1, row: 1};
   sprite: ex.Sprite;
-  anims: IAnims;
+  anims: IAnims = {};
   restTime = 0;
 
   constructor(public mapSpec: MapSpec) {
     super();
+    for (let row = 0; row < constants.mapRows; row++) {
+      for (let col = 0; col < constants.mapCols; col++) {
+        if (mapSpec[row][col] === "d") {
+          this.colRow.row = row;
+          this.colRow.col = col;
+          mapSpec[row][col] = "1";
+        }
+      }
+    }
     this.updatePos();
   }
 
@@ -35,7 +44,6 @@ export class Player extends ex.Actor {
       return col + row * sheet.columns;
     };
 
-    this.anims = {};
     const loadAnim = (name: string, xys: IColRow[]) => {
       const anim = sheet.getAnimationByIndices(
         engine,
@@ -125,13 +133,19 @@ export class Player extends ex.Actor {
     const orig = guide.snap(this.colRow);
     const target = guide.snap(guide.add(this.colRow, d));
 
+    if (!inMap(target)) {
+      this.emit("won");
+      this.kill();
+      return;
+    }
+
     const cell = this.mapSpec[target.row][target.col];
-    if (cell === "4" || cell === "5" || cell === "s") {
-      const far = guide.add(this.colRow, guide.mul(d, .25));
+    if (cell === "4" || cell === "5" || cell === "s" || cell === "l") {
+      const far = guide.add(this.colRow, guide.mul(d, .13));
       const near = guide.snap(this.colRow);
 
       this.state = PlayerState.Walk;
-      const forth = new TWEEN.Tween(this.colRow).to(far, 100).onUpdate(() => {
+      const forth = new TWEEN.Tween(this.colRow).to(far, 80).onUpdate(() => {
         this.updatePos();
       }).onComplete(() => {
         if (cell === "4") {
@@ -139,11 +153,11 @@ export class Player extends ex.Actor {
         }
       });
       
-      const back = new TWEEN.Tween(this.colRow).to(near, 100).onUpdate(() => {
+      const back = new TWEEN.Tween(this.colRow).to(near, 80).onUpdate(() => {
         this.updatePos();
       }).onComplete(() => {
         this.state = PlayerState.Rest;
-        this.restTime = 200;
+        this.restTime = 40;
         this.updateAnim();
       });
       
@@ -156,15 +170,11 @@ export class Player extends ex.Actor {
 
     this.state = PlayerState.Walk;
     this.updateAnim();
-    new TWEEN.Tween(this.colRow).to(target, 300).onUpdate(() => {
+    new TWEEN.Tween(this.colRow).to(target, 180).onUpdate(() => {
       this.updatePos();
     }).onComplete(() => {
       this.state = PlayerState.Idle;
       this.updateAnim();
-      if (!inMap(target)) {
-        this.emit("won");
-        return;
-      }
       if (cell === "0") {
         this.emit("stopped", new StoppedEvent(this.colRow));
       }

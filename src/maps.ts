@@ -1,27 +1,27 @@
 
 export default {
   start: `
-sssssssssssssss
-s00000sss00000s
-sssss00000sss0s
-sssssssssssss0l
-sssssssssssssss
-sssssssssssssss
-sssssssssssssss
-sssssssssssssss
-sssssssssssssss
-sssssssssssssss
+1ssssss12321111
+sd0000s1121111s
+1ssss0s1111ssss
+111ss0s111s001l
+11s000s11s00sss
+11s0ss1sss0s111
+11s0sss0000s111
+11s00000sss1112
+211sssss1111123
+221111111111233
   `,
   boom: `
-sssssssssssssss
-s1111111111111s
-s1111111111111s
-s1111111111111l
-s1111100011111s
-s1111103011111s
-s1111100011111s
-s1111111111111s
-s1111111111111s
-sssssssssssssss
+121212sss212121
+21sssssdsssss12
+2ss111111111ss2
+1s11111s11111s1
+2s11110001111s2
+1s111s030s111s1
+2s11110001111s2
+1ss111111111ss1
+21sssss1sssss12
+121212sls212121
   `,
 };

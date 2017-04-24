@@ -4,6 +4,7 @@ import {MapSpec, inMap} from "./parse-map";
 import {updateMap} from "./update-map";
 import {Player, StoppedEvent} from "./player";
 import {IColRow} from "./types";
+import constants from "./constants";
 
 export class Decay extends ex.Actor {
   time = 0;
@@ -73,6 +74,34 @@ export class Decay extends ex.Actor {
             this.mapSpec[row][col] = spec;
           }
         }
+      }
+    }
+
+    let unlock = true;
+    outer: for (let row = 0; row < constants.mapRows; row++) {
+      for (let col = 0; col < constants.mapCols; col++) {
+        const inSpec = this.mapSpec[row][col];
+        if (inSpec === "0") {
+          unlock = false;
+          break outer;
+        }
+      }
+    }
+
+    if (unlock) {
+      let didUnlock = false;
+      for (let row = 0; row < constants.mapRows; row++) {
+        for (let col = 0; col < constants.mapCols; col++) {
+          const inSpec = this.mapSpec[row][col];
+          if (inSpec === "l") {
+            this.mapSpec[row][col] = "1";
+            didUnlock = true;
+          }
+        }
+      }
+
+      if (didUnlock) {
+        this.emit("unlocked");
       }
     }
 

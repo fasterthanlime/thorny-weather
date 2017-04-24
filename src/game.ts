@@ -53,10 +53,15 @@ async function startGame() {
 
   const walkSfx = new SFX("walk");
   await walkSfx.load();
+
   const explodeSfx = new SFX("explode");
   await explodeSfx.load();
+
   const winSfx = new SFX("win");
   await winSfx.load();
+
+  const unlockSfx = new SFX("unlock");
+  await unlockSfx.load();
 
   const sheetTex = new ex.Texture(resourcePath("images/tiles.png"));
   await sheetTex.load();
@@ -83,7 +88,7 @@ async function startGame() {
   game.add(tilemap);
 
   const setupState = () => {
-    state.player.on("won", nextMap);
+    state.player.on("won", () => nextMap());
     state.player.on("walked", () => {
       walkSfx.play();
     });
@@ -91,21 +96,37 @@ async function startGame() {
     state.decay.on("exploded", () => {
       explodeSfx.play();
     });
+    state.decay.on("unlocked", () => {
+      unlockSfx.play();
+    });
 
     updateMap(tilemap, sheet, state.mapSpec);
   };
 
-  const nextMap = async () => {
-    winSfx.play();
-    mapIndex = (mapIndex + 1) % Object.keys(maps).length;
+  const nextMap = async (delta = 1, won = true) => {
+    if (won) {
+      winSfx.play();
+    }
+    mapIndex = (mapIndex + delta) % Object.keys(maps).length;
     state.player.kill();
     state.decay.kill();
     state = await loadMap(game, tilemap, sheet, mapIndex);
     setupState();
   };
 
-  state = await loadMap(game, tilemap, sheet, 0);
+  mapIndex = constants.startMap;
+  state = await loadMap(game, tilemap, sheet, mapIndex);
   setupState();
+
+  const skipper = new ex.Actor();
+  skipper.update = (engine, step) => {
+    if (engine.input.keyboard.wasPressed(ex.Input.Keys.R)) {
+      nextMap(0, false);
+    } else if (engine.input.keyboard.wasPressed(ex.Input.Keys.N)) {
+      nextMap(1, false);
+    }
+  };
+  game.add(skipper);
 }
 
 async function loadMap(
