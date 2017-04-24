@@ -11,6 +11,7 @@
     "electron-compile": "^6.4.0",
     "excalibur": "^0.10.0",
     "glob": "^7.1.1",
+    "itchy-electron": "^0.2.1",
     "tslint": "^5.1.0",
     "tween.js": "^16.6.0"
   },
@@ -20,5 +21,11 @@
   },
   "scripts": {
     "start": "electron ."
+  },
+  "itchyElectron": {
+    "productName": "Thorny Weather",
+    "itchTargets": {
+      "release": "fasterthanlime/thorny-weather"
+    }
   }
 }
