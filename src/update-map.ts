@@ -4,13 +4,14 @@ import * as ex from "excalibur";
 import constants from "./constants";
 import {MapSpec} from "./parse-map";
 
-// from sokoban_tilesheet
 const mapping = {
-  "0": {x: 10, y: 6}, // grass tile
-  "1": {x: 12, y: 6}, // dirt tile
-  "2": {x: 11, y: 6}, // rocks tile
-  "3": {x:  8, y: 6}, // concrete tile
-  "4": {x:  7, y: 6}, // bricks tile
+  "b": {x:  1, y: 1}, // background tile
+  "0": {x:  1, y: 3},
+  "1": {x:  2, y: 3},
+  "2": {x:  3, y: 3},
+  "3": {x:  4, y: 3},
+  "4": {x:  5, y: 3},
+  "5": {x:  6, y: 3},
 };
 
 export function updateMap(tilemap: ex.TileMap, sheet: ex.SpriteSheet, spec: MapSpec) {
@@ -23,7 +24,7 @@ export function updateMap(tilemap: ex.TileMap, sheet: ex.SpriteSheet, spec: MapS
       const c = spec[row][col];
       const cell = tilemap.getCell(col, row);
       cell.clearSprites();
-      cell.pushSprite(new ex.TileSprite("main", tileIndex(mapping["2"])));
+      cell.pushSprite(new ex.TileSprite("main", tileIndex(mapping.b)));
 
       const tileSpec = mapping[c];
       if (tileSpec) {
@@ -31,7 +32,7 @@ export function updateMap(tilemap: ex.TileMap, sheet: ex.SpriteSheet, spec: MapS
       }
 
       // looks dumb but logic might be more complicated later
-      if (c === "4") {
+      if (c === "5") {
         cell.solid = true;
       } else {
         cell.solid = false;

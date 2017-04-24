@@ -7,9 +7,10 @@ import * as TWEEN from "tween.js";
 
 import constants from "./constants";
 import maps from "./maps";
-import {MapSpec, parseMap} from "./parse-map";
+import {MapSpec, parseMap, inMap} from "./parse-map";
 import {updateMap} from "./update-map";
 import * as random from "./random";
+import {IColRow} from "./types";
 
 function resourcePath(inPath: string) {
   return `file://${resolve(__dirname, "..", inPath)}`;
@@ -22,16 +23,16 @@ enum Dir {
   Right,
 }
 
-function dirToDelta(dir: Dir): number[] {
+function dirToDelta(dir: Dir): IColRow {
   switch (dir) {
     case Dir.Up:
-      return [0, -1];
+      return {col: 0, row: -1};
     case Dir.Left:
-      return [-1, 0];
+      return {col: -1, row: 0};
     case Dir.Down:
-      return [0, 1];
+      return {col: 0, row: 1};
     case Dir.Right:
-      return [1, 0];
+      return {col: 1, row: 0};
   }
 }
 
@@ -52,11 +53,6 @@ interface IAnims {
   [key: string]: ex.Animation;
 }
 
-interface IXY {
-  x: number;
-  y: number;
-}
-
 class Tweener extends ex.Actor {
   update(engine, delta) {
     TWEEN.update();
@@ -70,22 +66,53 @@ class Decay extends ex.Actor {
       public tilemap: ex.TileMap,
       public sheet: ex.SpriteSheet,
       public mapSpec: MapSpec,
+      public player: Player,
   ) {
     super();
+    player.on("stopped", (ev: StoppedEvent) => {
+      this.turn(ev.colRow);
+    });
   }
 
-  update(engine, delta) {
-    this.time += delta;
+  turn(colRow: IColRow) {
+    ex.Logger.getInstance().info(`turn at ${JSON.stringify(colRow)}`);
 
-    if (this.time > 250) {
-      this.time = 0;
-      ex.Logger.getInstance().info("Updating map!");
-      const row = random.within(0, constants.mapRows);
-      const col = random.within(0, constants.mapCols);
-      this.mapSpec[row][col] = random.pick(["0", "1", "2", "3", "4"]);
+    const nextMapping = {
+      "0": "1",
+      "1": "2",
+      "2": "3",
+      "3": "4",
+      "4": "5",
+      "5": "5",
+    };
 
-      updateMap(this.tilemap, this.sheet, this.mapSpec);
+    const prevMapping: {
+      [key: string]: string;
+    } = {};
+    for (const key of Object.keys(nextMapping)) {
+      prevMapping[nextMapping[key]] = key;
     }
+
+    for (const dcol of [-1, 0, 1]) {
+      for (const drow of [-1, 0, 1]) {
+        const col = colRow.col + dcol;
+        const row = colRow.row + drow;
+        if (inMap({col, row})) {
+          let spec: string;
+          if (dcol === 0 && drow === 0) {
+            spec = "0";
+          } else {
+            ex.Logger.getInstance().info(`Decaying ${col}, ${row}`);
+            spec = nextMapping[this.mapSpec[row][col]];
+          }
+          if (spec) {
+            this.mapSpec[row][col] = spec;
+          }
+        }
+      }
+    }
+
+    updateMap(this.tilemap, this.sheet, this.mapSpec);
   }
 }
 
@@ -103,10 +130,20 @@ function playerStateToAnim(ps: PlayerState): string {
   }
 }
 
+class StoppedEvent extends ex.GameEvent<Player> {
+  colRow: IColRow = {col: 0, row: 0};
+
+  constructor(colRow: IColRow) {
+    super();
+    this.colRow.col = colRow.col;
+    this.colRow.row = colRow.row;
+  }
+}
+
 class Player extends ex.Actor {
   state = PlayerState.Idle;
   dir = Dir.Right;
-  colRow = new ex.Vector(1, 1);
+  colRow: IColRow = {col: 1, row: 1};
   sprite: ex.Sprite;
   anims: IAnims;
   tilemap: ex.TileMap;
@@ -129,12 +166,12 @@ class Player extends ex.Actor {
       cellSide, cellSide,
     );
 
-    const tileIndex = ({x, y}): number => {
-      return x + y * sheet.columns;
+    const tileIndex = ({col, row}): number => {
+      return col + row * sheet.columns;
     };
 
     this.anims = {};
-    const loadAnim = (name: string, xys: IXY[]) => {
+    const loadAnim = (name: string, xys: IColRow[]) => {
       const anim = sheet.getAnimationByIndices(
         engine,
         xys.map(tileIndex),
@@ -146,41 +183,41 @@ class Player extends ex.Actor {
     };
 
     loadAnim("idle-down", [
-      { x: 0, y: 5 },
+      { col: 0, row: 5 },
     ]);
     loadAnim("walk-down", [
-      { x: 1, y: 5 },
-      { x: 0, y: 5 },
-      { x: 2, y: 5 },
-      { x: 0, y: 5 },
+      { col: 1, row: 5 },
+      { col: 0, row: 5 },
+      { col: 2, row: 5 },
+      { col: 0, row: 5 },
     ]);
     loadAnim("idle-up", [
-      { x: 3, y: 5 },
+      { col: 3, row: 5 },
     ]);
     loadAnim("walk-up", [
-      { x: 4, y: 5 },
-      { x: 3, y: 5 },
-      { x: 5, y: 5 },
-      { x: 3, y: 5 },
+      { col: 4, row: 5 },
+      { col: 3, row: 5 },
+      { col: 5, row: 5 },
+      { col: 3, row: 5 },
     ]);
 
     loadAnim("idle-right", [
-      { x: 0, y: 7 },
+      { col: 0, row: 7 },
     ]);
     loadAnim("walk-right", [
-      { x: 1, y: 7 },
-      { x: 0, y: 7 },
-      { x: 2, y: 7 },
-      { x: 0, y: 7 },
+      { col: 1, row: 7 },
+      { col: 0, row: 7 },
+      { col: 2, row: 7 },
+      { col: 0, row: 7 },
     ]);
     loadAnim("idle-left", [
-      { x: 3, y: 7 },
+      { col: 3, row: 7 },
     ]);
     loadAnim("walk-left", [
-      { x: 4, y: 7 },
-      { x: 3, y: 7 },
-      { x: 5, y: 7 },
-      { x: 3, y: 7 },
+      { col: 4, row: 7 },
+      { col: 3, row: 7 },
+      { col: 5, row: 7 },
+      { col: 3, row: 7 },
     ]);
 
     this.updateAnim();
@@ -217,21 +254,22 @@ class Player extends ex.Actor {
   }
 
   walk(dir: Dir) {
-    const [dx, dy] = dirToDelta(dir);
+    const d = dirToDelta(dir);
+    ex.Logger.getInstance().info(`walking, d = ${JSON.stringify(d)}`);
     this.dir = dir;
 
     const cell = this.tilemap.getCell(
-      Math.round(this.colRow.x + dx),
-      Math.round(this.colRow.y + dy),
+      Math.round(this.colRow.col + d.col),
+      Math.round(this.colRow.row + d.row),
     );
     if (cell && cell.solid) {
       const far = {
-        x: this.colRow.x + .1 * dx,
-        y: this.colRow.y + .1 * dy,
+        col: this.colRow.col + .1 * d.col,
+        row: this.colRow.row + .1 * d.row,
       };
       const near = {
-        x: Math.round(this.colRow.x),
-        y: Math.round(this.colRow.y),
+        col: Math.round(this.colRow.col),
+        row: Math.round(this.colRow.row),
       };
 
       this.state = PlayerState.Walk;
@@ -257,12 +295,14 @@ class Player extends ex.Actor {
     this.state = PlayerState.Walk;
     this.updateAnim();
     new TWEEN.Tween(this.colRow).to({
-      x: this.colRow.x + dx, y: this.colRow.y + dy,
+      col: this.colRow.col + d.col,
+      row: this.colRow.row + d.row,
     }, 400).onUpdate(() => {
       this.updatePos();
     }).onComplete(() => {
       this.state = PlayerState.Idle;
       this.updateAnim();
+      this.emit("stopped", new StoppedEvent(this.colRow));
     }).start();
 
     this.emit("walked");
@@ -279,8 +319,8 @@ class Player extends ex.Actor {
   }
 
   updatePos() {
-    this.pos.x = (.5 + this.colRow.x) * constants.cellWidth;
-    this.pos.y = (.5 + this.colRow.y) * constants.cellHeight;
+    this.pos.x = (.5 + this.colRow.col) * constants.cellWidth;
+    this.pos.y = (.5 + this.colRow.row) * constants.cellHeight;
   }
 
   updateAnim() {
@@ -318,14 +358,15 @@ async function startGame() {
   }
 
   game.backgroundColor = new ex.Color(.83, .82, .71);
+  game.add(new Tweener());
 
-  const sokoTex = new ex.Texture(resourcePath("images/sokoban_tilesheet.png"));
-  await sokoTex.load();
+  const sheetTex = new ex.Texture(resourcePath("images/tiles.png"));
+  await sheetTex.load();
 
   const cellSide = 64;  
   const sheet = new ex.SpriteSheet(
-    sokoTex,
-    sokoTex.width / cellSide, sokoTex.height / cellSide,
+    sheetTex,
+    sheetTex.width / cellSide, sheetTex.height / cellSide,
     cellSide, cellSide,
   );
 
@@ -353,9 +394,8 @@ async function startGame() {
   });
   await player.load(game);
 
-  game.add(new Tweener());
-
-  game.add(new Decay(tilemap, sheet, mapSpec));
+  const decay = new Decay(tilemap, sheet, mapSpec, player);
+  game.add(decay);
 
   game.start();
 }

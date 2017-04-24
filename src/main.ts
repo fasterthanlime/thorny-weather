@@ -20,7 +20,7 @@ app.on("ready", () => {
     app.dock.setIcon(iconPath as any as Electron.NativeImage);
   }
   win.setIcon(iconPath as any as Electron.NativeImage);
-  win.setPosition(20, 20);
+  win.setPosition(0, 0);
   win.setSize(constants.windowWidth, constants.windowHeight);
   win.setResizable(false);
   const url = `file://${join(__dirname, "index.html")}`;

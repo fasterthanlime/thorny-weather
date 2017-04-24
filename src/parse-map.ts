@@ -1,5 +1,6 @@
 
 import constants from "./constants";
+import {IColRow} from "./types";
 
 const defaultTile = "0";
 export type MapSpec = string[][];
@@ -19,4 +20,20 @@ export function parseMap(map: string): MapSpec {
   }
 
   return res;
+}
+
+export function inMap({col, row}: IColRow): boolean {
+  if (col < 0) {
+    return false;
+  }
+  if (col >= constants.mapCols) {
+    return false;
+  }
+  if (row < 0) {
+    return false;
+  }
+  if (row >= constants.mapRows) {
+    return false;
+  }
+  return true;
 }
