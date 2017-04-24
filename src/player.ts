@@ -40,7 +40,7 @@ export class Player extends ex.Actor {
       const anim = sheet.getAnimationByIndices(
         engine,
         xys.map(tileIndex),
-        200,
+        120,
       );
       anim.loop = true;
       this.anims[name] = anim;
@@ -120,14 +120,13 @@ export class Player extends ex.Actor {
 
   walk(dir: Dir) {
     const d = dirToDelta(dir);
-    ex.Logger.getInstance().info(`walking, d = ${JSON.stringify(d)}`);
     this.dir = dir;
 
     const orig = guide.snap(this.colRow);
     const target = guide.snap(guide.add(this.colRow, d));
 
     const cell = this.mapSpec[target.row][target.col];
-    if (cell === "4" || cell === "5") {
+    if (cell === "4" || cell === "5" || cell === "s") {
       const far = guide.add(this.colRow, guide.mul(d, .25));
       const near = guide.snap(this.colRow);
 
@@ -157,11 +156,15 @@ export class Player extends ex.Actor {
 
     this.state = PlayerState.Walk;
     this.updateAnim();
-    new TWEEN.Tween(this.colRow).to(target, 400).onUpdate(() => {
+    new TWEEN.Tween(this.colRow).to(target, 300).onUpdate(() => {
       this.updatePos();
     }).onComplete(() => {
       this.state = PlayerState.Idle;
       this.updateAnim();
+      if (!inMap(target)) {
+        this.emit("won");
+        return;
+      }
       if (cell === "0") {
         this.emit("stopped", new StoppedEvent(this.colRow));
       }

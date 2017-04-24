@@ -36,8 +36,8 @@ export class Decay extends ex.Actor {
       "5": "4",
       "4": "2",
       "3": "1",
-      "2": "0",
-      "1": "0",
+      "2": "1",
+      "1": "1",
     };
 
     let explode = false;
