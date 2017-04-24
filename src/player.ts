@@ -23,7 +23,7 @@ export class Player extends ex.Actor {
         if (mapSpec[row][col] === "d") {
           this.colRow.row = row;
           this.colRow.col = col;
-          mapSpec[row][col] = "1";
+          mapSpec[row][col] = "0";
         }
       }
     }
@@ -176,7 +176,7 @@ export class Player extends ex.Actor {
     }).onComplete(() => {
       this.state = PlayerState.Idle;
       this.updateAnim();
-      if (cell === "0") {
+      if (true || cell === "0") {
         this.emit("stopped", new StoppedEvent(this.colRow));
       }
     }).start();

@@ -9,6 +9,7 @@ import constants from "./constants";
 export class Decay extends ex.Actor {
   time = 0;
   emitters: ex.ParticleEmitter[] = [];
+  locked = false;
 
   constructor(
     public tilemap: ex.TileMap,
@@ -56,6 +57,8 @@ export class Decay extends ex.Actor {
     toExplode.push(colRow);
 
     while (toExplode.length) {
+      ex.Logger.getInstance().info(`${toExplode.length} to explode`);
+
       for (const explColRow of toExplode) {
         if (explode) {
           const emitter = new ex.ParticleEmitter(0, 0, 858, 385);
@@ -93,7 +96,7 @@ export class Decay extends ex.Actor {
                 if (explode) {
                   spec = "0";
                 } else {
-                  spec = nextMapping[inSpec];
+                  spec = "0";
                 }
               } else {
                 if (explode) {
@@ -116,6 +119,7 @@ export class Decay extends ex.Actor {
       toExplode = toExplodeNext;
       toExplodeNext = [];
     }
+    ex.Logger.getInstance().info(`done exploding`);
 
     const nowLocked = isLocked(this.mapSpec);
     if (this.locked) {
