@@ -1,9 +1,15 @@
 
 import * as ex from "excalibur";
-import constants from "./constants";
+
 import {resolve} from "path";
 import glob from "./glob";
 import * as TWEEN from "tween.js";
+
+import constants from "./constants";
+import maps from "./maps";
+import {MapSpec, parseMap} from "./parse-map";
+import {updateMap} from "./update-map";
+import * as random from "./random";
 
 function resourcePath(inPath: string) {
   return `file://${resolve(__dirname, "..", inPath)}`;
@@ -54,6 +60,32 @@ interface IXY {
 class Tweener extends ex.Actor {
   update(engine, delta) {
     TWEEN.update();
+  }
+}
+
+class Decay extends ex.Actor {
+  time = 0;
+
+  constructor(
+      public tilemap: ex.TileMap,
+      public sheet: ex.SpriteSheet,
+      public mapSpec: MapSpec,
+  ) {
+    super();
+  }
+
+  update(engine, delta) {
+    this.time += delta;
+
+    if (this.time > 250) {
+      this.time = 0;
+      ex.Logger.getInstance().info("Updating map!");
+      const row = random.within(0, constants.mapRows);
+      const col = random.within(0, constants.mapCols);
+      this.mapSpec[row][col] = random.pick(["0", "1", "2", "3", "4"]);
+
+      updateMap(this.tilemap, this.sheet, this.mapSpec);
+    }
   }
 }
 
@@ -281,6 +313,7 @@ async function startGame() {
     log.info("Found sound " + urlPath);
     const sound = new ex.Sound(urlPath);
     await sound.load();
+    sound.setVolume(.4);
     walkSounds.push(sound);
   }
 
@@ -296,34 +329,9 @@ async function startGame() {
     cellSide, cellSide,
   );
 
-  const tileIndex = ({x, y}): number => {
-    return x + y * sheet.columns;
-  };
-
   const cellIndex = ({x, y}): number => {
     return x + y * constants.mapCols;
   };
-
-  const mapping = {
-    "0": {x: 10, y: 6}, // grass tile
-    "1": {x: 12, y: 6}, // dirt tile
-    "2": {x: 11, y: 6}, // rocks tile
-    "3": {x:  8, y: 6}, // concrete tile
-    "4": {x:  7, y: 6}, // bricks tile
-  };
-  
-  const map = `
-444444444444444
-400000000000004
-400000000000004
-400000000000004
-400100020003004
-400100020003004
-400000000000004
-400000000000004
-400000000000004
-444444444444444
-  `;
 
   const tilemap = new ex.TileMap(
     0, 0, 
@@ -332,26 +340,8 @@ async function startGame() {
   );
   tilemap.registerSpriteSheet("main", sheet);
 
-  const mapLines = map.split("\n").filter((x) => x.trim().length > 0);
-  {
-    let row = 0;
-    for (const line of mapLines) {
-      for (let column = 0; column < line.length; column++) {
-        const cell = tilemap.getCell(column, row);
-        cell.pushSprite(new ex.TileSprite("main", tileIndex(mapping["2"])));
-
-        const c = line.charAt(column);
-        const tileSpec = mapping[c];
-        if (tileSpec) {
-          cell.pushSprite(new ex.TileSprite("main", tileIndex(tileSpec)));
-        }
-        if (c === "4") {
-          cell.solid = true;
-        }
-      }
-      row++;
-    }
-  }
+  const mapSpec = parseMap(maps.start);
+  updateMap(tilemap, sheet, mapSpec);
   game.add(tilemap);
 
   const player = new Player(tilemap);
@@ -364,6 +354,8 @@ async function startGame() {
   await player.load(game);
 
   game.add(new Tweener());
+
+  game.add(new Decay(tilemap, sheet, mapSpec));
 
   game.start();
 }
