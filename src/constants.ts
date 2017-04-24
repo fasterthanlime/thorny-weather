@@ -16,3 +16,13 @@ export default {
   windowWidth: mapCols * cellWidth,
   windowHeight: mapRows * cellHeight + 40,
 };
+
+export const jsonMaps = [
+  "open-gate",
+  "growing-gate",
+  "gate",
+  "sprout",
+  "choice",
+  "choice2",
+  "backforth",
+];

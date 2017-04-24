@@ -1,0 +1,35 @@
+{ "height":10,
+ "layers":[
+        {
+         "data":[21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 47, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 16, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 16, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 16, 16, 16, 16, 16, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 16, 21, 21, 21, 16, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 16, 21, 21, 21, 16, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 75, 21, 21, 21, 75, 21, 21, 21, 21, 21],
+         "height":10,
+         "name":"Fantastic! Now pick a door - your destiny depends on it.",
+         "opacity":1,
+         "type":"tilelayer",
+         "visible":true,
+         "width":15,
+         "x":0,
+         "y":0
+        }],
+ "nextobjectid":1,
+ "orientation":"orthogonal",
+ "renderorder":"right-down",
+ "tileheight":64,
+ "tilesets":[
+        {
+         "columns":13,
+         "firstgid":1,
+         "image":"..\/images\/tiles.png",
+         "imageheight":512,
+         "imagewidth":832,
+         "margin":0,
+         "name":"tiles",
+         "spacing":0,
+         "tilecount":104,
+         "tileheight":64,
+         "tilewidth":64
+        }],
+ "tilewidth":64,
+ "version":1,
+ "width":15
+}

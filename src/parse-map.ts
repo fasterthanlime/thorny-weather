@@ -9,7 +9,14 @@ import * as fsOrig from "fs";
 const fs = promisifyAll(fsOrig);
 
 const defaultTile = "0";
-export type MapSpec = string[][];
+
+// tslint:disable
+export interface MapSpec {
+  [key: number]: string[];
+  path?: string;
+  name?: string;
+};
+// tslint:enable
 
 const reverseMapping: {
   [key: number]: string;
@@ -34,13 +41,17 @@ export async function parseJsonMap(mapName: string): Promise<MapSpec> {
   const contents = await fs.readFileAsync(mapPath, {encoding: "utf8"});
   const fullData = JSON.parse(contents);
   const firstgid = fullData.tilesets[0].firstgid;
+  const layer = fullData.layers[0];
 
-  const data = fullData.layers[0].data;
+  const res: MapSpec = [];
+  res.name = layer.name;
+  res.path = mapName;
 
-  const res: string[][] = [];
+  const data = layer.data;
+
   let index = 0;
   for (let row = 0; row < constants.mapRows; row++) {
-    res.push(Array(constants.mapCols).fill(defaultTile));
+    res[row] = Array(constants.mapCols).fill(defaultTile);
 
     for (let column = 0; column < constants.mapCols; column++) {
       const tileIndex = data[index] - firstgid;

@@ -4,7 +4,7 @@ import * as ex from "excalibur";
 import glob from "./glob";
 import * as TWEEN from "tween.js";
 
-import constants from "./constants";
+import constants, {jsonMaps} from "./constants";
 import { resourcePath } from "./resources";
 import { MapSpec, parseJsonMap, inMap } from "./parse-map";
 import { updateMap } from "./update-map";
@@ -13,6 +13,9 @@ import { IColRow } from "./types";
 import {Player, StoppedEvent} from "./player";
 import {Decay} from "./decay";
 import SFX from "./sfx";
+
+import {remote} from "electron";
+const {BrowserWindow} = remote;
 
 class Tweener extends ex.Actor {
   update(engine, delta) {
@@ -33,10 +36,6 @@ interface IGameState {
   decay: Decay;
   mapSpec: MapSpec;
 }
-
-const jsonMaps = [
-  "sprout",
-];
 
 async function startGame() {
   let state: IGameState;
@@ -59,6 +58,12 @@ async function startGame() {
 
   const explodeSfx = new SFX("explode");
   await explodeSfx.load();
+
+  const sproutSfx = new SFX("sprout");
+  await sproutSfx.load();
+
+  const thornSfx = new SFX("thorn");
+  await thornSfx.load();
 
   const winSfx = new SFX("win");
   await winSfx.load();
@@ -97,7 +102,7 @@ async function startGame() {
   label.fontFamily = "Arial, sans-serif";
   label.fontSize = 20;
   label.fontUnit = ex.FontUnit.Px;
-  label.text = "Yoko boom";
+  label.text = "Loading...";
   label.color = ex.Color.White;
   label.pos.setTo(10, game.getDrawHeight() - 10);
   game.add(label);
@@ -112,9 +117,11 @@ async function startGame() {
   instructLabel.pos.setTo(game.getDrawWidth() - 10, game.getDrawHeight() - 10);
   game.add(instructLabel);
 
+  let gpCanRestart = true;
+
   const setupState = () => {
-    // const mapName = Object.keys(maps)[mapIndex];
-    // label.text = mapName;
+    label.text = state.mapSpec.name;
+    BrowserWindow.getAllWindows()[0].setTitle(state.mapSpec.path);
 
     state.player.on("won", () => nextMap());
     state.player.on("walked", () => {
@@ -123,7 +130,21 @@ async function startGame() {
 
     state.decay.on("exploded", () => {
       explodeSfx.play();
+      const gameEl = document.getElementById("game");
+      gameEl.classList.add("shake-horizontal");
+      setTimeout(() => {
+        gameEl.classList.remove("shake-horizontal");
+      }, 250);
     });
+
+    state.decay.on("sprout", () => {
+      sproutSfx.play();
+    });
+
+    state.decay.on("thorn", () => {
+      thornSfx.play();
+    });
+
     state.decay.on("unlocked", () => {
       unlockSfx.play();
     });
@@ -132,13 +153,14 @@ async function startGame() {
     });
 
     updateMap(tilemap, sheet, state.mapSpec);
+    gpCanRestart = true;
   };
 
   const nextMap = async (delta = 1, won = true) => {
     if (won) {
       winSfx.play();
     }
-    mapIndex = (mapIndex + delta) % jsonMaps.length;
+    mapIndex = (mapIndex + delta + jsonMaps.length) % jsonMaps.length;
     state.player.kill();
     state.decay.kill();
     state = await loadMap(game, tilemap, sheet, mapIndex);
@@ -151,10 +173,16 @@ async function startGame() {
 
   const skipper = new ex.Actor();
   skipper.update = (engine, step) => {
-    if (engine.input.keyboard.wasPressed(ex.Input.Keys.R)) {
+    const gp = engine.input.gamepads.at(0);
+
+    if (engine.input.keyboard.wasPressed(ex.Input.Keys.R) ||
+        (gpCanRestart && gp.isButtonPressed(ex.Input.Buttons.Start))) {
+      gpCanRestart = false;
       nextMap(0, false);
     } else if (engine.input.keyboard.wasPressed(ex.Input.Keys.N)) {
       nextMap(1, false);
+    } else if (engine.input.keyboard.wasPressed(ex.Input.Keys.P)) {
+      nextMap(-1, false);
     }
   };
   game.add(skipper);

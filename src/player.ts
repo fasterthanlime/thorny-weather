@@ -23,7 +23,7 @@ export class Player extends ex.Actor {
         if (mapSpec[row][col] === "d") {
           this.colRow.row = row;
           this.colRow.col = col;
-          mapSpec[row][col] = "0";
+          mapSpec[row][col] = "i";
         }
       }
     }
@@ -116,13 +116,27 @@ export class Player extends ex.Actor {
   }
 
   handleInputs(engine: ex.Engine) {
-    if (engine.input.keyboard.isHeld(ex.Input.Keys.W)) {
+    const kb = engine.input.keyboard;
+    const gp = engine.input.gamepads.at(0);
+    const xAxis = gp.getAxes(ex.Input.Axes.LeftStickX);
+    const yAxis = gp.getAxes(ex.Input.Axes.LeftStickY);
+
+    if (kb.isHeld(ex.Input.Keys.W) ||
+        kb.isHeld(ex.Input.Keys.Up) ||
+        yAxis < -.7) {
       this.walk(Dir.Up);
-    } else if (engine.input.keyboard.isHeld(ex.Input.Keys.A)) {
+    } else if (
+        kb.isHeld(ex.Input.Keys.A) ||
+        kb.isHeld(ex.Input.Keys.Left) ||
+        xAxis < -.7) {
       this.walk(Dir.Left);
-    } else if (engine.input.keyboard.isHeld(ex.Input.Keys.S)) {
+    } else if (kb.isHeld(ex.Input.Keys.S) ||
+        kb.isHeld(ex.Input.Keys.Down) ||
+        yAxis > .7) {
       this.walk(Dir.Down);
-    } else if (engine.input.keyboard.isHeld(ex.Input.Keys.D)) {
+    } else if (kb.isHeld(ex.Input.Keys.D) ||
+        kb.isHeld(ex.Input.Keys.Right) ||
+        xAxis > .7) {
       this.walk(Dir.Right);
     }
   }

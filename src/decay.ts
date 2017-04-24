@@ -6,6 +6,12 @@ import {Player, StoppedEvent} from "./player";
 import {IColRow} from "./types";
 import constants from "./constants";
 
+const ExplodeBeginColor = new ex.Color(86, 108, 75);
+const ExplodeEndColor = new ex.Color(203, 254, 176);
+
+const PoofBeginColor = new ex.Color(255, 255, 255);
+const PoofEndColor = new ex.Color(255, 255, 255);
+
 export class Decay extends ex.Actor {
   time = 0;
   emitters: ex.ParticleEmitter[] = [];
@@ -24,15 +30,12 @@ export class Decay extends ex.Actor {
   }
 
   turn(colRow: IColRow) {
-    ex.Logger.getInstance().info(`turn at ${JSON.stringify(colRow)}`);
-
     const nextMapping = {
       "0": "1",
       "1": "2",
       "2": "3",
       "3": "4",
       "4": "5",
-      "5": "5",
     };
 
     const explodeMapping = {
@@ -56,33 +59,13 @@ export class Decay extends ex.Actor {
     let toExplodeNext: IColRow[] = [];
     toExplode.push(colRow);
 
-    while (toExplode.length) {
-      ex.Logger.getInstance().info(`${toExplode.length} to explode`);
+    let thorned = false;
+    let sprouted = false;
 
+    while (toExplode.length) {
       for (const explColRow of toExplode) {
         if (explode) {
-          const emitter = new ex.ParticleEmitter(0, 0, 858, 385);
-          emitter.emitterType = ex.EmitterType.Circle;
-          emitter.radius = 15;
-          emitter.minVel = 50;
-          emitter.maxVel = 170;
-          emitter.minAngle = 0;
-          emitter.maxAngle = 6.2;
-          emitter.isEmitting = true;
-          emitter.emitRate = 250;
-          emitter.opacity = 0.37;
-          emitter.fadeFlag = true;
-          emitter.particleLife = 400;
-          emitter.maxSize = 10;
-          emitter.minSize = 1;
-          emitter.startSize = 0;
-          emitter.endSize = 0;
-          emitter.acceleration = new ex.Vector(0, 95);
-          emitter.beginColor = ex.Color.Vermillion;
-          emitter.endColor = ex.Color.Rose;
-          emitter.pos.x = (explColRow.col + .5) * constants.cellWidth;
-          emitter.pos.y = (explColRow.row + .5) * constants.cellHeight;
-          this.emitters.push(emitter);
+          this.rejoice(explColRow, ExplodeBeginColor, ExplodeEndColor);
         }
 
         for (const dcol of [-1, 0, 1]) {
@@ -93,8 +76,8 @@ export class Decay extends ex.Actor {
               const inSpec = this.mapSpec[row][col];
               let spec: string;
               if (dcol === 0 && drow === 0) {
-                if (explode) {
-                  spec = "0";
+                if (inSpec === "i" || inSpec === "l") {
+                  // keep ice & locks around
                 } else {
                   spec = "0";
                 }
@@ -103,6 +86,14 @@ export class Decay extends ex.Actor {
                   spec = explodeMapping[inSpec];
                 } else {
                   spec = nextMapping[inSpec];
+                  if (spec && (spec === "4" || spec === "5")) {
+                    this.rejoice({col, row}, PoofBeginColor, PoofEndColor);
+                  }
+                  if (spec === "4") {
+                    sprouted = true;
+                  } else if (spec === "5") {
+                    thorned = true;
+                  }
                 }
               }
               if (explode && inSpec === "4") {
@@ -119,7 +110,13 @@ export class Decay extends ex.Actor {
       toExplode = toExplodeNext;
       toExplodeNext = [];
     }
-    ex.Logger.getInstance().info(`done exploding`);
+
+
+    if (thorned) {
+      this.emit("thorn");
+    } else if (sprouted) {
+      this.emit("sprout");
+    }
 
     const nowLocked = isLocked(this.mapSpec);
     if (this.locked) {
@@ -136,16 +133,40 @@ export class Decay extends ex.Actor {
     updateMap(this.tilemap, this.sheet, this.mapSpec);
   }
 
+  rejoice(colRow: IColRow, begin: ex.Color, end: ex.Color) {
+    const emitter = new ex.ParticleEmitter(0, 0, 64, 64);
+    emitter.emitterType = ex.EmitterType.Circle;
+    emitter.radius = 15;
+    emitter.minVel = 80;
+    emitter.maxVel = 110;
+    emitter.minAngle = 0;
+    emitter.maxAngle = 6.2;
+    emitter.isEmitting = true;
+    emitter.emitRate = 80;
+    emitter.opacity = 0.5;
+    emitter.particleLife = 300;
+    // emitter.maxSize = 10;
+    // emitter.minSize = 4;
+    emitter.startSize = 10;
+    emitter.endSize = 1;
+    emitter.acceleration = new ex.Vector(0, 95);
+    emitter.beginColor = begin;
+    emitter.endColor = end;
+    emitter.pos.x = (colRow.col + .5) * constants.cellWidth;
+    emitter.pos.y = (colRow.row + .5) * constants.cellHeight;
+    this.emitters.push(emitter);
+  }
+
   update(engine, delta) {
     while (this.emitters.length) {
       const emitter = this.emitters.shift();
       engine.add(emitter);
       setTimeout(() => {
         emitter.isEmitting = false;
-      }, 100);
+      }, 150);
       setTimeout(() => {
         emitter.kill();
-      }, 500);
+      }, 2000);
     }
   }
 }

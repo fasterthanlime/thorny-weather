@@ -6,16 +6,16 @@ import {MapSpec, inMap} from "./parse-map";
 import {IColRow} from "./types";
 
 export const mapping = {
-  "b": {x:  1, y: 1}, // background tile
+  "i": {x:  2, y: 1}, // ice tile
 
-  "0": {x:  1, y: 3},
+  "0": {x:  1, y: 1},
   "1": {x:  2, y: 3},
   "2": {x:  3, y: 3},
   "3": {x:  4, y: 3},
   "4": {x:  5, y: 3},
   "5": {x:  6, y: 3},
 
-  "s": {x:  7, y: 3}, // solid
+  "d": {x:  7, y: 3}, // departure
 
   "l": {x:  7, y: 5}, // lock
 
@@ -80,24 +80,30 @@ export function updateMap(tilemap: ex.TileMap, sheet: ex.SpriteSheet, spec: MapS
       const c = spec[row][col];
       const cell = tilemap.getCell(col, row);
       cell.clearSprites();
-      cell.pushSprite(new ex.TileSprite("main", tileIndex(mapping.b)));
+      if (c === "s" || c === "l") {
+        // solid tiles & exits have ice/sky under
+        cell.pushSprite(new ex.TileSprite("main", tileIndex(mapping.i)));
+      } else {
+        // everything else has grass
+        cell.pushSprite(new ex.TileSprite("main", tileIndex(mapping[0])));
+      }
 
       if (c === "s") {
         cell.pushSprite(new ex.TileSprite("main", tileIndex(mapping["s-"])));
-        for (const dcol of [-1, 0, 1]) {
-          for (const drow of [-1, 0, 1]) {
-            if (dcol === 0 && drow === 0) {
-              continue;
-            }
+        // for (const dcol of [-1, 0, 1]) {
+        //   for (const drow of [-1, 0, 1]) {
+        //     if (dcol === 0 && drow === 0) {
+        //       continue;
+        //     }
 
-            const target = {col: col + dcol, row: row + drow};
-            if (inMap(target)) {
-              if (spec[target.row][target.col] === "s") {
-                cell.pushSprite(new ex.TileSprite("main", tileIndex(mapping[offsetToName({col: dcol, row: drow})])));
-              }
-            }
-          }
-        }
+        //     const target = {col: col + dcol, row: row + drow};
+        //     if (inMap(target)) {
+        //       if (spec[target.row][target.col] === "s") {
+        //         cell.pushSprite(new ex.TileSprite("main", tileIndex(mapping[offsetToName({col: dcol, row: drow})])));
+        //       }
+        //     }
+        //   }
+        // }
       } else if (c === "l") {
         let bestFit = "";
         let bestDistance = 2000;
