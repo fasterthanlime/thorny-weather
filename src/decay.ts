@@ -1,7 +1,7 @@
 
 import * as ex from "excalibur";
 import {MapSpec, inMap} from "./parse-map";
-import {updateMap} from "./update-map";
+import {updateMap, isLocked} from "./update-map";
 import {Player, StoppedEvent} from "./player";
 import {IColRow} from "./types";
 import constants from "./constants";
@@ -117,33 +117,17 @@ export class Decay extends ex.Actor {
       toExplodeNext = [];
     }
 
-    let unlock = true;
-    outer: for (let row = 0; row < constants.mapRows; row++) {
-      for (let col = 0; col < constants.mapCols; col++) {
-        const inSpec = this.mapSpec[row][col];
-        if (inSpec === "5") {
-          unlock = false;
-          break outer;
-        }
-      }
-    }
-
-    if (unlock) {
-      let didUnlock = false;
-      for (let row = 0; row < constants.mapRows; row++) {
-        for (let col = 0; col < constants.mapCols; col++) {
-          const inSpec = this.mapSpec[row][col];
-          if (inSpec === "l") {
-            this.mapSpec[row][col] = "1";
-            didUnlock = true;
-          }
-        }
-      }
-
-      if (didUnlock) {
+    const nowLocked = isLocked(this.mapSpec);
+    if (this.locked) {
+      if (!nowLocked) {
         this.emit("unlocked");
       }
+    } else {
+      if (nowLocked) {
+        this.emit("locked");
+      }
     }
+    this.locked = nowLocked;
 
     updateMap(this.tilemap, this.sheet, this.mapSpec);
   }

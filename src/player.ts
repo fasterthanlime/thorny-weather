@@ -4,6 +4,7 @@ import * as ex from "excalibur";
 import constants from "./constants";
 import {resourcePath} from "./resources";
 import {MapSpec, inMap} from "./parse-map";
+import {isLocked} from "./update-map";
 import {IColRow} from "./types";
 import * as guide from "./guide";
 
@@ -140,7 +141,7 @@ export class Player extends ex.Actor {
     }
 
     const cell = this.mapSpec[target.row][target.col];
-    if (cell === "4" || cell === "5" || cell === "s" || cell === "l") {
+    if (cell === "4" || cell === "5" || cell === "s" || (cell === "l" && isLocked(this.mapSpec))) {
       const far = guide.add(this.colRow, guide.mul(d, .13));
       const near = guide.snap(this.colRow);
 

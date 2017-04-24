@@ -63,6 +63,9 @@ async function startGame() {
   const unlockSfx = new SFX("unlock");
   await unlockSfx.load();
 
+  const lockSfx = new SFX("lock");
+  await lockSfx.load();
+
   const sheetTex = new ex.Texture(resourcePath("images/tiles.png"));
   await sheetTex.load();
 
@@ -120,6 +123,9 @@ async function startGame() {
     });
     state.decay.on("unlocked", () => {
       unlockSfx.play();
+    });
+    state.decay.on("locked", () => {
+      lockSfx.play();
     });
 
     updateMap(tilemap, sheet, state.mapSpec);
