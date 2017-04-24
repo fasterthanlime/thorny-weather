@@ -5,7 +5,7 @@ import constants from "./constants";
 import {MapSpec, inMap} from "./parse-map";
 import {IColRow} from "./types";
 
-const mapping = {
+export const mapping = {
   "b": {x:  1, y: 1}, // background tile
 
   "0": {x:  1, y: 3},

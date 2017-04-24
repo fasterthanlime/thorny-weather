@@ -6,8 +6,7 @@ import * as TWEEN from "tween.js";
 
 import constants from "./constants";
 import { resourcePath } from "./resources";
-import maps from "./maps";
-import { MapSpec, parseMap, inMap } from "./parse-map";
+import { MapSpec, parseJsonMap, inMap } from "./parse-map";
 import { updateMap } from "./update-map";
 import * as random from "./random";
 import { IColRow } from "./types";
@@ -34,6 +33,10 @@ interface IGameState {
   decay: Decay;
   mapSpec: MapSpec;
 }
+
+const jsonMaps = [
+  "sprout",
+];
 
 async function startGame() {
   let state: IGameState;
@@ -110,8 +113,8 @@ async function startGame() {
   game.add(instructLabel);
 
   const setupState = () => {
-    const mapName = Object.keys(maps)[mapIndex];
-    label.text = mapName;
+    // const mapName = Object.keys(maps)[mapIndex];
+    // label.text = mapName;
 
     state.player.on("won", () => nextMap());
     state.player.on("walked", () => {
@@ -135,7 +138,7 @@ async function startGame() {
     if (won) {
       winSfx.play();
     }
-    mapIndex = (mapIndex + delta) % Object.keys(maps).length;
+    mapIndex = (mapIndex + delta) % jsonMaps.length;
     state.player.kill();
     state.decay.kill();
     state = await loadMap(game, tilemap, sheet, mapIndex);
@@ -159,10 +162,10 @@ async function startGame() {
 
 async function loadMap(
     game: ex.Engine, tilemap: ex.TileMap, sheet: ex.SpriteSheet, mapIndex: number): Promise<IGameState> {
-  const mapName = Object.keys(maps)[mapIndex];
-  const map = maps[mapName];
-  ex.Logger.getInstance().info(`Loading map #${mapIndex}: ${mapName}`);
-  const mapSpec = parseMap(map);
+  const mapPath = jsonMaps[mapIndex];
+  ex.Logger.getInstance().info(`Loading map #${mapIndex}: ${mapPath}`);
+
+  const mapSpec = await parseJsonMap(mapPath);
 
   const player = new Player(mapSpec);
   game.add(player);
