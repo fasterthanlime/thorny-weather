@@ -20,8 +20,12 @@ app.on("ready", () => {
     app.dock.setIcon(iconPath as any as Electron.NativeImage);
   }
   win.setIcon(iconPath as any as Electron.NativeImage);
-  win.setPosition(0, 0);
   win.setSize(constants.windowWidth, constants.windowHeight);
+  if (process.env.DEVTOOLS === "1") {
+    win.setPosition(0, 0);
+  } else {
+    win.center();
+  }
   win.setResizable(false);
   const url = `file://${join(__dirname, "index.html")}`;
   win.setMenuBarVisibility(false);
