@@ -14,6 +14,8 @@ import {Player, StoppedEvent} from "./player";
 import {Decay} from "./decay";
 import SFX from "./sfx";
 
+const inDev = process.env.DEVTOOLS === "1";
+
 import {remote} from "electron";
 const {BrowserWindow} = remote;
 
@@ -59,6 +61,9 @@ async function startGame() {
   const explodeSfx = new SFX("explode");
   await explodeSfx.load();
 
+  const bumpSfx = new SFX("bump");
+  await bumpSfx.load();
+
   const sproutSfx = new SFX("sprout");
   await sproutSfx.load();
 
@@ -98,12 +103,14 @@ async function startGame() {
   tilemap.registerSpriteSheet("main", sheet);
   game.add(tilemap);
 
+  const textColor = new ex.Color(255, 255, 255);
+
   const label = new ex.Label();
   label.fontFamily = "Arial, sans-serif";
   label.fontSize = 20;
   label.fontUnit = ex.FontUnit.Px;
   label.text = "Loading...";
-  label.color = ex.Color.White;
+  label.color = textColor;
   label.pos.setTo(10, game.getDrawHeight() - 10);
   game.add(label);
 
@@ -112,7 +119,7 @@ async function startGame() {
   instructLabel.fontSize = 20;
   instructLabel.fontUnit = ex.FontUnit.Px;
   instructLabel.text = "Press [R] to restart";
-  instructLabel.color = ex.Color.White;
+  instructLabel.color = textColor;
   instructLabel.textAlign = ex.TextAlign.Right;
   instructLabel.pos.setTo(game.getDrawWidth() - 10, game.getDrawHeight() - 10);
   game.add(instructLabel);
@@ -120,12 +127,37 @@ async function startGame() {
   let gpCanRestart = true;
 
   const setupState = () => {
-    label.text = state.mapSpec.name;
-    BrowserWindow.getAllWindows()[0].setTitle(state.mapSpec.path);
+    {
+      label.text = state.mapSpec.name;
+      const tweenA = new TWEEN.Tween(textColor).to({
+        r: 0,
+        g: 0,
+        b: 0,
+      }, 250);
+      tweenA.onComplete(() => {
+        label.text = state.mapSpec.name;
+      });
+
+      const tweenB = new TWEEN.Tween(textColor).to({
+        r: 255,
+        g: 255,
+        b: 255,
+      }, 250);
+
+      tweenA.chain(tweenB).repeat(1).start();
+    }
+
+    if (inDev) {
+      BrowserWindow.getAllWindows()[0].setTitle(state.mapSpec.path);
+    }
 
     state.player.on("won", () => nextMap());
     state.player.on("walked", () => {
       walkSfx.play();
+    });
+
+    state.player.on("bumped", () => {
+      bumpSfx.play();
     });
 
     state.decay.on("exploded", () => {
@@ -180,9 +212,13 @@ async function startGame() {
       gpCanRestart = false;
       nextMap(0, false);
     } else if (engine.input.keyboard.wasPressed(ex.Input.Keys.N)) {
-      nextMap(1, false);
+      if (inDev) {
+        nextMap(1, false);
+      }
     } else if (engine.input.keyboard.wasPressed(ex.Input.Keys.P)) {
-      nextMap(-1, false);
+      if (inDev) {
+        nextMap(-1, false);
+      }
     }
   };
   game.add(skipper);

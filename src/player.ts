@@ -9,12 +9,12 @@ import {IColRow} from "./types";
 import * as guide from "./guide";
 
 export class Player extends ex.Actor {
-  state = PlayerState.Idle;
+  state = PlayerState.Rest;
   dir = Dir.Right;
   colRow: IColRow = {col: 1, row: 1};
   sprite: ex.Sprite;
   anims: IAnims = {};
-  restTime = 0;
+  restTime = 500;
 
   constructor(public mapSpec: MapSpec) {
     super();
@@ -23,7 +23,7 @@ export class Player extends ex.Actor {
         if (mapSpec[row][col] === "d") {
           this.colRow.row = row;
           this.colRow.col = col;
-          mapSpec[row][col] = "i";
+          mapSpec[row][col] = "0";
         }
       }
     }
@@ -165,6 +165,8 @@ export class Player extends ex.Actor {
       }).onComplete(() => {
         if (cell === "4") {
           this.emit("stopped", new StoppedEvent(target));
+        } else {
+          this.emit("bumped");
         }
       });
       
@@ -179,7 +181,6 @@ export class Player extends ex.Actor {
       forth.chain(back).start();
 
       this.updateAnim();
-      this.emit("walked");
       return;
     }
 
@@ -190,7 +191,7 @@ export class Player extends ex.Actor {
     }).onComplete(() => {
       this.state = PlayerState.Idle;
       this.updateAnim();
-      if (true || cell === "0") {
+      if (cell !== "i") {
         this.emit("stopped", new StoppedEvent(this.colRow));
       }
     }).start();

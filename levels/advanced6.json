@@ -1,0 +1,35 @@
+{ "height":10,
+ "layers":[
+        {
+         "data":[21, 21, 21, 21, 21, 21, 45, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 45, 46, 45, 21, 45, 45, 45, 46, 45, 46, 21, 21, 21, 21, 46, 21, 45, 21, 21, 21, 0, 21, 45, 21, 45, 46, 21, 21, 21, 45, 21, 45, 21, 21, 16, 16, 16, 21, 0, 21, 45, 74, 21, 21, 45, 21, 21, 44, 16, 16, 21, 0, 21, 0, 45, 21, 21, 21, 21, 47, 21, 0, 21, 21, 21, 45, 0, 21, 0, 0, 45, 46, 46, 21, 0, 44, 46, 45, 46, 45, 46, 21, 0, 0, 46, 45, 46, 46, 44, 21, 21, 45, 21, 45, 21, 21, 0, 0, 0, 46, 45, 46, 46, 45, 21, 21, 21, 21, 21, 46, 46, 46, 46, 46, 46, 45, 46, 46, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 46],
+         "height":10,
+         "name":"Did you know that 7 elements fit in human short-term memory? Or is it 13?",
+         "opacity":1,
+         "type":"tilelayer",
+         "visible":true,
+         "width":15,
+         "x":0,
+         "y":0
+        }],
+ "nextobjectid":1,
+ "orientation":"orthogonal",
+ "renderorder":"right-down",
+ "tileheight":64,
+ "tilesets":[
+        {
+         "columns":13,
+         "firstgid":1,
+         "image":"..\/images\/tiles.png",
+         "imageheight":512,
+         "imagewidth":832,
+         "margin":0,
+         "name":"tiles",
+         "spacing":0,
+         "tilecount":104,
+         "tileheight":64,
+         "tilewidth":64
+        }],
+ "tilewidth":64,
+ "version":1,
+ "width":15
+}

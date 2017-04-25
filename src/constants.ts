@@ -25,4 +25,13 @@ export const jsonMaps = [
   "choice",
   "choice2",
   "backforth",
+  "advanced1",
+  "advanced2",
+  "advanced3",
+  "advanced4",
+  "advanced5",
+  "advanced6",
+  "win",
+  "credits1",
+  "credits2",
 ];

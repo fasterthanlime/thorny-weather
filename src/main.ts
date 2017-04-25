@@ -14,7 +14,7 @@ app.on("ready", () => {
   enableLiveReload();
 
   const win = new BrowserWindow();
-  win.setTitle("A Sm*ll W***d");
+  win.setTitle("Thorny Weather");
   const iconPath = resolve(__dirname, "..", "images", "ld.png");
   if (app.dock) {
     app.dock.setIcon(iconPath as any as Electron.NativeImage);
