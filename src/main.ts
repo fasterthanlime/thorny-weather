@@ -19,7 +19,9 @@ app.on("ready", () => {
   if (app.dock) {
     app.dock.setIcon(iconPath as any as Electron.NativeImage);
   }
-  win.setIcon(iconPath as any as Electron.NativeImage);
+  if (process.platform === "win32" || process.platform === "linux") {
+    win.setIcon(iconPath as any as Electron.NativeImage);
+  }
   win.setSize(constants.windowWidth, constants.windowHeight);
   if (process.env.DEVTOOLS === "1") {
     win.setPosition(0, 0);
